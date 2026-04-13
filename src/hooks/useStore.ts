@@ -141,6 +141,40 @@ export function useStore() {
     { calories: 0, potassium: 0, phosphorus: 0 }
   );
 
+  const exportDb = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch(`${SYNC_URL}?date=all`);
+      const data = res.ok ? await res.json() : { products, entries };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nutrition-db-${today()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.warn("export error", e);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const importDb = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const prods: Product[] = data.products || [];
+      const ents: DailyEntry[] = data.entries || [];
+      setProducts(prods);
+      setEntries(ents);
+      await syncToServer(prods, ents);
+    } catch (e) {
+      console.warn("import error", e);
+      alert("Ошибка при загрузке файла. Проверьте формат.");
+    }
+  };
+
   return {
     products,
     entries,
@@ -152,5 +186,7 @@ export function useStore() {
     addEntry,
     removeEntry,
     syncFromServer,
+    exportDb,
+    importDb,
   };
 }

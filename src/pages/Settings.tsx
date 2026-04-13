@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore, Product } from "@/hooks/useStore";
 import Icon from "@/components/ui/icon";
@@ -7,7 +7,8 @@ const empty = { name: "", calories: "", potassium: "", phosphorus: "" };
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { products, addProduct, updateProduct, removeProduct } = useStore();
+  const { products, syncing, addProduct, updateProduct, removeProduct, exportDb, importDb } = useStore();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<Product | null>(null);
 
@@ -55,6 +56,40 @@ export default function Settings() {
           Продукты
         </h1>
       </header>
+
+      <div className="px-4 py-4 bg-white border-b border-gray-200">
+        <p className="text-xs text-gray-400 tracking-widest uppercase mb-3">База данных</p>
+        <div className="flex gap-2">
+          <button
+            onClick={exportDb}
+            disabled={syncing}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-sm font-body border border-gray-200 hover:bg-gray-50 transition-colors"
+          >
+            <Icon name="Download" size={14} />
+            Скачать базу
+          </button>
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={syncing}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-sm font-body border border-gray-200 hover:bg-gray-50 transition-colors"
+          >
+            <Icon name="Upload" size={14} />
+            Загрузить базу
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importDb(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        {syncing && <p className="text-xs text-gray-400 text-center mt-2">синхронизация...</p>}
+      </div>
 
       <div className="px-4 py-4 bg-white border-b border-gray-200">
         <p className="text-xs text-gray-400 tracking-widest uppercase mb-3">

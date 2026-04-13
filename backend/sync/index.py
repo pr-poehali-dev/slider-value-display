@@ -38,10 +38,15 @@ def handler(event: dict, context) -> dict:
             for r in cur.fetchall()
         ]
 
-        cur.execute(
-            "SELECT id, product_id, product_name, grams, calories, potassium, phosphorus, eaten_at::text, created_at::text FROM daily_entries WHERE eaten_at = %s ORDER BY created_at",
-            (today_date,)
-        )
+        if today_date == "all":
+            cur.execute(
+                "SELECT id, product_id, product_name, grams, calories, potassium, phosphorus, eaten_at::text, created_at::text FROM daily_entries ORDER BY created_at"
+            )
+        else:
+            cur.execute(
+                "SELECT id, product_id, product_name, grams, calories, potassium, phosphorus, eaten_at::text, created_at::text FROM daily_entries WHERE eaten_at = %s ORDER BY created_at",
+                (today_date,)
+            )
         entries = [
             {"id": r[0], "product_id": r[1], "product_name": r[2], "grams": float(r[3]),
              "calories": float(r[4]), "potassium": float(r[5]), "phosphorus": float(r[6]),
