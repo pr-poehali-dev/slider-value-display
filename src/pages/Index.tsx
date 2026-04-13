@@ -1,188 +1,126 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useStore } from "@/hooks/useStore";
+import Icon from "@/components/ui/icon";
 
 export default function Index() {
-  const [value, setValue] = useState(50);
+  const navigate = useNavigate();
+  const { products, entries, totals, syncing, addEntry, removeEntry } = useStore();
+  const [selectedId, setSelectedId] = useState("");
+  const [grams, setGrams] = useState("100");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(Number(e.target.value));
+  const handleAdd = () => {
+    if (!selectedId) return;
+    addEntry(selectedId, Number(grams) || 100);
+    setGrams("100");
   };
 
-  const percent = value;
-  const dashOffset = 283 - (283 * percent) / 100;
+  const fmt = (n: number) => Math.round(n * 10) / 10;
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center font-body"
-      style={{ background: "hsl(var(--background))" }}
-    >
-      <div className="flex flex-col items-center gap-16 animate-slide-up">
+    <div className="min-h-screen font-body" style={{ background: "hsl(0 0% 97%)" }}>
+      <header className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white">
+        <h1 className="font-display text-lg tracking-widest uppercase" style={{ color: "hsl(0 0% 10%)", fontWeight: 300 }}>
+          Дневник питания
+        </h1>
+        <div className="flex items-center gap-3">
+          {syncing && <span className="text-xs text-gray-400 tracking-wider">синхронизация...</span>}
+          <button onClick={() => navigate("/settings")} className="p-1.5 rounded hover:bg-gray-100 transition-colors">
+            <Icon name="Settings" size={18} />
+          </button>
+        </div>
+      </header>
 
-        <div className="relative flex items-center justify-center" style={{ width: 220, height: 220 }}>
-          <svg
-            width="220"
-            height="220"
-            viewBox="0 0 100 100"
-            style={{ transform: "rotate(-90deg)", position: "absolute", top: 0, left: 0 }}
-          >
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="hsl(0 0% 88%)"
-              strokeWidth="1.5"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="hsl(0 0% 15%)"
-              strokeWidth="1.5"
-              strokeDasharray="283"
-              strokeDashoffset={dashOffset}
-              strokeLinecap="round"
-              style={{ transition: "stroke-dashoffset 0.1s ease" }}
-            />
-          </svg>
-
-          <div className="flex flex-col items-center z-10">
-            <span
-              className="font-display leading-none"
-              style={{
-                fontSize: "clamp(52px, 10vw, 72px)",
-                color: "hsl(var(--foreground))",
-                fontWeight: 300,
-                letterSpacing: "-0.02em",
-                transition: "all 0.1s ease",
-              }}
-            >
+      <div className="grid grid-cols-3 border-b border-gray-200 bg-white">
+        {[
+          { label: "ККАЛ", value: fmt(totals.calories) },
+          { label: "КАЛИЙ мг", value: fmt(totals.potassium) },
+          { label: "ФОСФОР мг", value: fmt(totals.phosphorus) },
+        ].map(({ label, value }) => (
+          <div key={label} className="flex flex-col items-center py-4 border-r border-gray-100 last:border-r-0">
+            <span className="font-display text-2xl" style={{ fontWeight: 300, color: "hsl(0 0% 10%)" }}>
               {value}
             </span>
-            <span
-              className="font-body"
-              style={{
-                fontSize: 11,
-                color: "hsl(0 0% 55%)",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                marginTop: 2,
-              }}
-            >
-              значение
-            </span>
+            <span className="text-xs text-gray-400 tracking-widest mt-1">{label}</span>
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="flex flex-col items-center gap-6 w-full" style={{ maxWidth: 340 }}>
-          <div className="flex justify-between w-full px-1">
-            <span
-              className="font-body"
-              style={{ fontSize: 11, color: "hsl(0 0% 60%)", letterSpacing: "0.15em" }}
+      <div className="px-4 py-4 border-b border-gray-200 bg-white">
+        {products.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-2">
+            Сначала добавьте продукты в{" "}
+            <button onClick={() => navigate("/settings")} className="underline">настройках</button>
+          </p>
+        ) : (
+          <div className="flex gap-2">
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-white font-body focus:outline-none focus:border-gray-400"
             >
-              0
-            </span>
-            <span
-              className="font-body"
-              style={{ fontSize: 11, color: "hsl(0 0% 60%)", letterSpacing: "0.15em" }}
-            >
-              100
-            </span>
-          </div>
-
-          <div className="relative w-full" style={{ height: 24 }}>
-            <div
-              className="absolute top-1/2 left-0 right-0 rounded-full"
-              style={{
-                height: 1,
-                background: "hsl(0 0% 82%)",
-                transform: "translateY(-50%)",
-              }}
-            />
-            <div
-              className="absolute top-1/2 left-0 rounded-full"
-              style={{
-                height: 1,
-                width: `${percent}%`,
-                background: "hsl(0 0% 15%)",
-                transform: "translateY(-50%)",
-                transition: "width 0.05s ease",
-              }}
-            />
+              <option value="">— выберите продукт —</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
             <input
-              type="range"
-              min={0}
-              max={100}
-              value={value}
-              onChange={handleChange}
-              className="absolute inset-0 w-full opacity-0 cursor-pointer"
-              style={{ height: "100%" }}
+              type="number"
+              value={grams}
+              onChange={(e) => setGrams(e.target.value)}
+              className="w-20 border border-gray-200 rounded px-3 py-2 text-sm text-center font-body focus:outline-none focus:border-gray-400"
+              placeholder="г"
+              min={1}
             />
-            <div
-              className="absolute top-1/2 rounded-full"
+            <button
+              onClick={handleAdd}
+              disabled={!selectedId}
+              className="px-4 py-2 rounded text-sm font-body transition-colors"
               style={{
-                width: 14,
-                height: 14,
-                background: "hsl(0 0% 10%)",
-                border: "2px solid hsl(0 0% 97%)",
-                boxShadow: "0 0 0 1px hsl(0 0% 20%)",
-                transform: "translate(-50%, -50%)",
-                left: `${percent}%`,
-                transition: "left 0.05s ease",
-                pointerEvents: "none",
-              }}
-            />
-          </div>
-        </div>
-
-        <div
-          className="grid grid-cols-3 font-display"
-          style={{
-            gap: "1px",
-            background: "hsl(0 0% 82%)",
-            border: "1px solid hsl(0 0% 82%)",
-          }}
-        >
-          {[
-            { label: "МИН", val: 0 },
-            { label: "ТЕКУЩЕЕ", val: value },
-            { label: "МАКС", val: 100 },
-          ].map(({ label, val }) => (
-            <div
-              key={label}
-              className="flex flex-col items-center justify-center"
-              style={{
-                width: 100,
-                height: 72,
-                background: "hsl(0 0% 97%)",
-                padding: "12px 8px",
+                background: selectedId ? "hsl(0 0% 10%)" : "hsl(0 0% 85%)",
+                color: selectedId ? "white" : "hsl(0 0% 50%)",
               }}
             >
-              <span
-                style={{
-                  fontSize: 22,
-                  fontWeight: 300,
-                  color: "hsl(0 0% 10%)",
-                  lineHeight: 1,
-                  transition: "all 0.1s ease",
-                }}
+              <Icon name="Plus" size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="px-4 py-2">
+        {entries.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">Записей пока нет</p>
+        ) : (
+          <div className="flex flex-col gap-0">
+            {[...entries].reverse().map((entry, i) => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between py-3 border-b border-gray-100"
+                style={{ animationDelay: `${i * 0.04}s` }}
               >
-                {val}
-              </span>
-              <span
-                className="font-body"
-                style={{
-                  fontSize: 9,
-                  color: "hsl(0 0% 55%)",
-                  letterSpacing: "0.18em",
-                  marginTop: 5,
-                }}
-              >
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-body" style={{ color: "hsl(0 0% 15%)" }}>
+                      {entry.product_name}
+                    </span>
+                    <span className="text-xs text-gray-400">{entry.grams} г</span>
+                  </div>
+                  <div className="flex gap-3 mt-0.5">
+                    <span className="text-xs text-gray-400">{fmt(entry.calories)} ккал</span>
+                    <span className="text-xs text-gray-400">К: {fmt(entry.potassium)}</span>
+                    <span className="text-xs text-gray-400">Ф: {fmt(entry.phosphorus)}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeEntry(entry.id)}
+                  className="ml-3 p-1 text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                  <Icon name="X" size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

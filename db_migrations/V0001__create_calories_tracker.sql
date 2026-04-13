@@ -1,0 +1,24 @@
+
+CREATE TABLE IF NOT EXISTS products (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  calories NUMERIC(8,2) NOT NULL DEFAULT 0,
+  potassium NUMERIC(8,2) NOT NULL DEFAULT 0,
+  phosphorus NUMERIC(8,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS daily_entries (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  grams NUMERIC(8,2) NOT NULL DEFAULT 100,
+  calories NUMERIC(8,2) NOT NULL DEFAULT 0,
+  potassium NUMERIC(8,2) NOT NULL DEFAULT 0,
+  phosphorus NUMERIC(8,2) NOT NULL DEFAULT 0,
+  eaten_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_entries_date ON daily_entries(eaten_at);
